@@ -64,7 +64,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 aspect_ratio: "1:1",
             });
             
-            displayImage(result.url);
+            // Use CORS proxy for the generated image
+            const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(result.url)}`;
+            displayImage(corsProxyUrl);
         } catch (error) {
             console.error('Error generating image:', error);
             alert('Failed to generate image. Please try again.');
@@ -128,12 +130,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 processSvg(imageData, colors, detail);
             };
             
-            img.onerror = function() {
+            img.onerror = function(e) {
+                console.error('Image loading error:', e);
                 showLoading(false);
                 alert('Error loading image. Try a different one.');
             };
             
-            img.src = currentImage;
+            // For URLs that might be AI-generated, ensure we're using the CORS proxy
+            if (currentImage.startsWith('http') && !currentImage.includes('corsproxy.io')) {
+                img.src = `https://corsproxy.io/?${encodeURIComponent(currentImage)}`;
+            } else {
+                img.src = currentImage;
+            }
             
         } catch (error) {
             console.error('Error converting to SVG:', error);
@@ -369,4 +377,3 @@ document.addEventListener('DOMContentLoaded', () => {
         loading.style.display = show ? 'flex' : 'none';
     }
 });
-
