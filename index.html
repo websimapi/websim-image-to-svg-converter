@@ -1,0 +1,64 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image to SVG Converter</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Image to SVG Converter</h1>
+        
+        <div class="upload-section">
+            <label for="imageUpload" class="upload-button">
+                Upload Image
+                <input type="file" id="imageUpload" accept="image/*">
+            </label>
+            <p class="or">OR</p>
+            <div class="prompt-section">
+                <input type="text" id="imagePrompt" placeholder="Describe an image to generate...">
+                <button id="generateBtn">Generate</button>
+            </div>
+        </div>
+        
+        <div class="preview-section">
+            <div class="preview-container">
+                <div id="imagePreview">
+                    <p>Your image will appear here</p>
+                </div>
+                <div id="svgPreview">
+                    <p>SVG will appear here</p>
+                </div>
+            </div>
+            <div class="controls">
+                <div class="slider-container">
+                    <label for="detailLevel">Detail Level:</label>
+                    <input type="range" id="detailLevel" min="1" max="10" value="5">
+                    <span id="detailValue">5</span>
+                </div>
+                <div class="slider-container">
+                    <label for="colorCount">Colors:</label>
+                    <input type="range" id="colorCount" min="2" max="20" value="8">
+                    <span id="colorValue">8</span>
+                </div>
+                <button id="convertBtn" disabled>Convert to SVG</button>
+                <button id="downloadBtn" disabled>Download SVG</button>
+            </div>
+        </div>
+        
+        <div id="loading" class="loading-overlay">
+            <div class="spinner"></div>
+            <p>Processing...</p>
+        </div>
+    </div>
+    <script type="importmap">
+    {
+        "imports": {
+            "potrace": "https://cdn.jsdelivr.net/npm/potrace@2.1.8/dist/potrace.min.js"
+        }
+    }
+    </script>
+    <script src="script.js"></script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
