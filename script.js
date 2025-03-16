@@ -68,8 +68,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update slider values
     function updateDetailValue() {
         detailValue.textContent = detailLevel.value;
-        // Custom preset when user changes settings
-        if (document.querySelector('.preset-btn.active').dataset.preset !== 'custom') {
+        const activePreset = document.querySelector('.preset-btn.active');
+        // Check if there is an active preset button before accessing its dataset
+        if (activePreset && activePreset.dataset.preset !== 'custom') {
             presetButtons.forEach(b => b.classList.remove('active'));
             document.querySelector('[data-preset="custom"]').classList.add('active');
         }
@@ -77,8 +78,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateColorValue() {
         colorValue.textContent = colorCount.value;
-        // Custom preset when user changes settings
-        if (document.querySelector('.preset-btn.active').dataset.preset !== 'custom') {
+        const activePreset = document.querySelector('.preset-btn.active');
+        // Check if there is an active preset button before accessing its dataset
+        if (activePreset && activePreset.dataset.preset !== 'custom') {
             presetButtons.forEach(b => b.classList.remove('active'));
             document.querySelector('[data-preset="custom"]').classList.add('active');
         }
@@ -86,8 +88,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function updateSimplifyValue() {
         simplifyValue.textContent = simplifyLevel.value;
-        // Custom preset when user changes settings
-        if (document.querySelector('.preset-btn.active').dataset.preset !== 'custom') {
+        const activePreset = document.querySelector('.preset-btn.active');
+        // Check if there is an active preset button before accessing its dataset
+        if (activePreset && activePreset.dataset.preset !== 'custom') {
             presetButtons.forEach(b => b.classList.remove('active'));
             document.querySelector('[data-preset="custom"]').classList.add('active');
         }
