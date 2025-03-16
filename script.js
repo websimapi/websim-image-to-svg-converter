@@ -64,9 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 aspect_ratio: "1:1",
             });
             
-            // Use CORS proxy for the generated image
-            const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(result.url)}`;
-            displayImage(corsProxyUrl);
+            displayImage(result.url);
         } catch (error) {
             console.error('Error generating image:', error);
             alert('Failed to generate image. Please try again.');
@@ -130,15 +128,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 processSvg(imageData, colors, detail);
             };
             
-            img.onerror = function(e) {
-                console.error('Image loading error:', e);
+            img.onerror = function() {
                 showLoading(false);
                 alert('Error loading image. Try a different one.');
             };
             
-            // For URLs that might be AI-generated, ensure we're using the CORS proxy
-            if (currentImage.startsWith('http') && !currentImage.includes('corsproxy.io')) {
-                img.src = `https://corsproxy.io/?${encodeURIComponent(currentImage)}`;
+            // Use CORS proxy for generated images (URLs that don't start with data:)
+            if (currentImage.startsWith('http')) {
+                const corsProxy = 'https://corsproxy.io/?';
+                img.src = corsProxy + encodeURIComponent(currentImage);
             } else {
                 img.src = currentImage;
             }
