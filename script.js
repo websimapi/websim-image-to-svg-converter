@@ -135,8 +135,14 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Use CORS proxy for generated images (URLs that don't start with data:)
             if (currentImage.startsWith('http')) {
-                const corsProxy = 'https://corsproxy.io/?';
-                img.src = corsProxy + encodeURIComponent(currentImage);
+                const corsProxies = [
+                    'https://corsproxy.io/?',
+                    'https://cors-anywhere.herokuapp.com/',
+                    'https://api.allorigins.win/raw?url=',
+                    'https://cors.sh/?'
+                ];
+                
+                loadImageWithFallbacks(img, currentImage, corsProxies, 0);
             } else {
                 img.src = currentImage;
             }
@@ -146,6 +152,24 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Failed to convert image. Please try again.');
             showLoading(false);
         }
+    }
+
+    // Function to attempt loading image with multiple proxy fallbacks
+    function loadImageWithFallbacks(imgElement, originalUrl, proxies, index) {
+        if (index >= proxies.length) {
+            showLoading(false);
+            alert('Error loading image. Unable to access through any proxy. Try a different image.');
+            return;
+        }
+        
+        const proxyUrl = proxies[index] + encodeURIComponent(originalUrl);
+        
+        imgElement.onerror = function() {
+            console.log(`Proxy ${proxies[index]} failed, trying next one...`);
+            loadImageWithFallbacks(imgElement, originalUrl, proxies, index + 1);
+        };
+        
+        imgElement.src = proxyUrl;
     }
 
     // Process SVG using image data
