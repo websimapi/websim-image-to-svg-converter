@@ -31,15 +31,34 @@
                 </div>
             </div>
             <div class="controls">
-                <div class="slider-container">
-                    <label for="detailLevel">Detail Level:</label>
-                    <input type="range" id="detailLevel" min="1" max="10" value="5">
-                    <span id="detailValue">5</span>
+                <div class="preset-buttons">
+                    <button class="preset-btn" data-preset="cartoon">Cartoon</button>
+                    <button class="preset-btn" data-preset="minimal">Minimal</button>
+                    <button class="preset-btn" data-preset="detailed">Detailed</button>
+                    <button class="preset-btn" data-preset="custom">Custom</button>
                 </div>
-                <div class="slider-container">
-                    <label for="colorCount">Colors:</label>
-                    <input type="range" id="colorCount" min="2" max="20" value="8">
-                    <span id="colorValue">8</span>
+                <div class="settings-container">
+                    <div class="slider-container">
+                        <label for="detailLevel">Detail Level:</label>
+                        <div class="slider-wrapper">
+                            <input type="range" id="detailLevel" min="1" max="10" value="5">
+                            <span id="detailValue">5</span>
+                        </div>
+                    </div>
+                    <div class="slider-container">
+                        <label for="colorCount">Color Count:</label>
+                        <div class="slider-wrapper">
+                            <input type="range" id="colorCount" min="2" max="20" value="8">
+                            <span id="colorValue">8</span>
+                        </div>
+                    </div>
+                    <div class="slider-container">
+                        <label for="simplifyLevel">Simplify Level:</label>
+                        <div class="slider-wrapper">
+                            <input type="range" id="simplifyLevel" min="1" max="10" value="3">
+                            <span id="simplifyValue">3</span>
+                        </div>
+                    </div>
                 </div>
                 <button id="convertBtn" disabled>Convert to SVG</button>
                 <button id="downloadBtn" disabled>Download SVG</button>
@@ -51,13 +70,6 @@
             <p>Processing...</p>
         </div>
     </div>
-    <script type="importmap">
-    {
-        "imports": {
-            "potrace": "https://cdn.jsdelivr.net/npm/potrace@2.1.8/dist/potrace.min.js"
-        }
-    }
-    </script>
     <script src="script.js"></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>

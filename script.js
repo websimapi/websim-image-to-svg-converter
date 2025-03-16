@@ -11,11 +11,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const detailValue = document.getElementById('detailValue');
     const colorCount = document.getElementById('colorCount');
     const colorValue = document.getElementById('colorValue');
+    const simplifyLevel = document.getElementById('simplifyLevel');
+    const simplifyValue = document.getElementById('simplifyValue');
+    const presetButtons = document.querySelectorAll('.preset-btn');
     const loading = document.getElementById('loading');
 
     // Variables to store data
     let currentImage = null;
     let currentSvg = null;
+    
+    // Default settings
+    const presets = {
+        cartoon: { detail: 5, colors: 8, simplify: 3 },
+        minimal: { detail: 2, colors: 3, simplify: 7 },
+        detailed: { detail: 8, colors: 15, simplify: 1 },
+        custom: { detail: 5, colors: 8, simplify: 3 }
+    };
 
     // Event listeners
     imageUpload.addEventListener('change', handleImageUpload);
@@ -24,14 +35,62 @@ document.addEventListener('DOMContentLoaded', () => {
     downloadBtn.addEventListener('click', downloadSvg);
     detailLevel.addEventListener('input', updateDetailValue);
     colorCount.addEventListener('input', updateColorValue);
+    simplifyLevel.addEventListener('input', updateSimplifyValue);
+    
+    // Set preset buttons
+    presetButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const preset = btn.dataset.preset;
+            applyPreset(preset);
+            
+            // Update active button
+            presetButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+    
+    // Apply initial preset
+    applyPreset('cartoon');
+    document.querySelector('[data-preset="cartoon"]').classList.add('active');
+
+    // Apply preset settings
+    function applyPreset(preset) {
+        const settings = presets[preset];
+        detailLevel.value = settings.detail;
+        colorCount.value = settings.colors;
+        simplifyLevel.value = settings.simplify;
+        
+        updateDetailValue();
+        updateColorValue();
+        updateSimplifyValue();
+    }
 
     // Update slider values
     function updateDetailValue() {
         detailValue.textContent = detailLevel.value;
+        // Custom preset when user changes settings
+        if (document.querySelector('.preset-btn.active').dataset.preset !== 'custom') {
+            presetButtons.forEach(b => b.classList.remove('active'));
+            document.querySelector('[data-preset="custom"]').classList.add('active');
+        }
     }
 
     function updateColorValue() {
         colorValue.textContent = colorCount.value;
+        // Custom preset when user changes settings
+        if (document.querySelector('.preset-btn.active').dataset.preset !== 'custom') {
+            presetButtons.forEach(b => b.classList.remove('active'));
+            document.querySelector('[data-preset="custom"]').classList.add('active');
+        }
+    }
+    
+    function updateSimplifyValue() {
+        simplifyValue.textContent = simplifyLevel.value;
+        // Custom preset when user changes settings
+        if (document.querySelector('.preset-btn.active').dataset.preset !== 'custom') {
+            presetButtons.forEach(b => b.classList.remove('active'));
+            document.querySelector('[data-preset="custom"]').classList.add('active');
+        }
     }
 
     // Handle image upload
@@ -125,7 +184,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Create SVG from the processed image
                 const detail = parseInt(detailLevel.value);
-                processSvg(imageData, colors, detail);
+                const simplify = parseInt(simplifyLevel.value);
+                processSvg(imageData, colors, detail, simplify);
             };
             
             img.onerror = function() {
@@ -180,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Process SVG using image data
-    function processSvg(imageData, colors, detailLevel) {
+    function processSvg(imageData, colors, detailLevel, simplifyLevel) {
         try {
             // Create SVG paths for each color
             const width = imageData.width;
@@ -191,18 +251,31 @@ document.addEventListener('DOMContentLoaded', () => {
             svgElement.setAttribute('width', width);
             svgElement.setAttribute('height', height);
             svgElement.setAttribute('viewBox', `0 0 ${width} ${height}`);
+            svgElement.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
             
-            // Add each color layer as paths
-            for (const color of colors) {
+            // Background rectangle
+            const bgColor = colors[0]; // Use most dominant color as background
+            const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            bgRect.setAttribute('width', width);
+            bgRect.setAttribute('height', height);
+            bgRect.setAttribute('fill', bgColor);
+            svgElement.appendChild(bgRect);
+            
+            // Add each color layer as paths (skip background color)
+            for (let i = 1; i < colors.length; i++) {
+                const color = colors[i];
+                
                 // Extract pixels matching this color
-                const threshold = 10 - detailLevel; // Higher detail = lower threshold
+                const threshold = 30 - (detailLevel * 3); // Higher detail = lower threshold
                 const colorData = extractColorLayer(imageData, color, threshold);
                 
                 // Create paths for this color
-                const paths = generatePaths(colorData, width, height);
+                const paths = generatePaths(colorData, width, height, simplifyLevel);
                 
                 // Add paths to SVG
                 for (const path of paths) {
+                    if (path.length < 10) continue; // Skip very small paths
+                    
                     const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                     pathElement.setAttribute('d', path);
                     pathElement.setAttribute('fill', color);
@@ -257,7 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 );
                 
                 // Mark pixel if within threshold
-                result[y * width + x] = distance < threshold * 10 ? 1 : 0;
+                result[y * width + x] = distance < threshold ? 1 : 0;
             }
         }
         
@@ -265,40 +338,140 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Generate SVG paths for a color layer
-    function generatePaths(colorData, width, height) {
-        // Simple method to create paths
+    function generatePaths(colorData, width, height, simplifyLevel) {
         const { data } = colorData;
         const paths = [];
+        const visited = new Array(width * height).fill(false);
         
-        // Find contiguous regions and create paths
-        // Note: This is a simplified approach
+        // Directions for neighbor checks (right, down, left, up)
+        const dx = [1, 0, -1, 0];
+        const dy = [0, 1, 0, -1];
+        
+        // Find blobs using BFS and trace their contours
         for (let y = 0; y < height; y++) {
-            let path = '';
-            let isDrawing = false;
-            
             for (let x = 0; x < width; x++) {
-                const current = data[y * width + x];
+                const idx = y * width + x;
                 
-                if (current && !isDrawing) {
-                    // Start new path
-                    path = `M${x},${y}`;
-                    isDrawing = true;
-                } else if (current && isDrawing) {
-                    // Continue path
-                    path += ` L${x},${y}`;
-                } else if (!current && isDrawing) {
-                    // End path
-                    paths.push(path + ` L${x-1},${y+1} Z`);
-                    isDrawing = false;
+                if (data[idx] === 1 && !visited[idx]) {
+                    // Start of a new blob
+                    const points = [];
+                    const queue = [{x, y}];
+                    visited[idx] = true;
+                    
+                    // BFS to find all connected pixels
+                    while (queue.length > 0) {
+                        const current = queue.shift();
+                        const cx = current.x;
+                        const cy = current.y;
+                        
+                        // Check if this is a boundary pixel
+                        let isBoundary = false;
+                        for (let d = 0; d < 4; d++) {
+                            const nx = cx + dx[d];
+                            const ny = cy + dy[d];
+                            
+                            if (nx < 0 || nx >= width || ny < 0 || ny >= height || data[ny * width + nx] === 0) {
+                                isBoundary = true;
+                            } else if (!visited[ny * width + nx]) {
+                                queue.push({x: nx, y: ny});
+                                visited[ny * width + nx] = true;
+                            }
+                        }
+                        
+                        if (isBoundary) {
+                            points.push({x: cx, y: cy});
+                        }
+                    }
+                    
+                    // Skip if too few points
+                    if (points.length < 3) continue;
+                    
+                    // Simplify the path based on simplify level
+                    const simplified = simplifyPoints(points, simplifyLevel);
+                    
+                    // Create SVG path from the points
+                    if (simplified.length > 2) {
+                        let path = `M${simplified[0].x},${simplified[0].y}`;
+                        for (let i = 1; i < simplified.length; i++) {
+                            path += ` L${simplified[i].x},${simplified[i].y}`;
+                        }
+                        path += 'Z';
+                        paths.push(path);
+                    }
                 }
-            }
-            
-            if (isDrawing) {
-                paths.push(path + ` L${width-1},${y+1} Z`);
             }
         }
         
         return paths;
+    }
+    
+    // Simplify points using Ramer-Douglas-Peucker algorithm
+    function simplifyPoints(points, simplifyLevel) {
+        if (points.length <= 2) return points;
+        
+        // Higher simplify level means more aggressive simplification
+        const epsilon = 0.5 + (simplifyLevel * 0.5);
+        
+        // Find point with maximum distance
+        let maxDistance = 0;
+        let index = 0;
+        const firstPoint = points[0];
+        const lastPoint = points[points.length - 1];
+        
+        for (let i = 1; i < points.length - 1; i++) {
+            const distance = perpendicularDistance(points[i], firstPoint, lastPoint);
+            if (distance > maxDistance) {
+                maxDistance = distance;
+                index = i;
+            }
+        }
+        
+        // Recursively simplify
+        if (maxDistance > epsilon) {
+            const firstHalf = simplifyPoints(points.slice(0, index + 1), simplifyLevel);
+            const secondHalf = simplifyPoints(points.slice(index), simplifyLevel);
+            
+            // Concatenate the two simplified parts
+            return firstHalf.slice(0, -1).concat(secondHalf);
+        } else {
+            return [firstPoint, lastPoint];
+        }
+    }
+    
+    // Calculate perpendicular distance from a point to a line
+    function perpendicularDistance(point, lineStart, lineEnd) {
+        const dx = lineEnd.x - lineStart.x;
+        const dy = lineEnd.y - lineStart.y;
+        
+        // If the line is just a point, return distance between points
+        const lineLengthSquared = dx * dx + dy * dy;
+        if (lineLengthSquared === 0) {
+            const pointDx = point.x - lineStart.x;
+            const pointDy = point.y - lineStart.y;
+            return Math.sqrt(pointDx * pointDx + pointDy * pointDy);
+        }
+        
+        // Calculate projection and distance
+        const t = ((point.x - lineStart.x) * dx + (point.y - lineStart.y) * dy) / lineLengthSquared;
+        if (t < 0) {
+            // Point is beyond lineStart
+            const pointDx = point.x - lineStart.x;
+            const pointDy = point.y - lineStart.y;
+            return Math.sqrt(pointDx * pointDx + pointDy * pointDy);
+        }
+        if (t > 1) {
+            // Point is beyond lineEnd
+            const pointDx = point.x - lineEnd.x;
+            const pointDy = point.y - lineEnd.y;
+            return Math.sqrt(pointDx * pointDx + pointDy * pointDy);
+        }
+        
+        // Perpendicular distance
+        const projX = lineStart.x + t * dx;
+        const projY = lineStart.y + t * dy;
+        const pointDx = point.x - projX;
+        const pointDy = point.y - projY;
+        return Math.sqrt(pointDx * pointDx + pointDy * pointDy);
     }
 
     // Quantize image colors
