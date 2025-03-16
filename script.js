@@ -137,9 +137,15 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentImage.startsWith('http')) {
                 const corsProxies = [
                     'https://corsproxy.io/?',
-                    'https://cors-anywhere.herokuapp.com/',
+                    'https://proxy.cors.sh/',
+                    'https://cors-proxy.htmldriven.com/?url=',
+                    'https://thingproxy.freeboard.io/fetch/',
                     'https://api.allorigins.win/raw?url=',
-                    'https://cors.sh/?'
+                    'https://api.codetabs.com/v1/proxy?quest=',
+                    'https://cors-anywhere.herokuapp.com/',
+                    'https://crossorigin.me/',
+                    'https://cors.x2u.in/',
+                    'https://thebugging.com/'
                 ];
                 
                 loadImageWithFallbacks(img, currentImage, corsProxies, 0);
@@ -163,6 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         const proxyUrl = proxies[index] + encodeURIComponent(originalUrl);
+        console.log(`Trying proxy: ${proxies[index]} (${index + 1}/${proxies.length})`);
         
         imgElement.onerror = function() {
             console.log(`Proxy ${proxies[index]} failed, trying next one...`);
